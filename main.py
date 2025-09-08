@@ -62,7 +62,8 @@ app.include_router(clover_merchant_router)
 app.include_router(cart_router)
 app.include_router(clover_cart_router)
 app.include_router(user_preferences_router)
-app.include_router(users_router, prefix="/users")
+app.include_router(users.router, prefix="/users")
+app.include_router(user_preferences_router)
 
 @app.get("/")
 def read_root():
