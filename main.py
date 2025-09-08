@@ -1,4 +1,3 @@
-
 from fastapi import FastAPI, Query, HTTPException, Path, Header, Depends
 from dotenv import load_dotenv
 from openai import OpenAI
@@ -20,7 +19,9 @@ from database.database import get_db
 from helpers.merchant_helper import MerchantHelper
 from models.merchant_token import MerchantToken
 from app.routes.user_preferences import router as user_preferences_router
-from routers.users import router as users_router 
+from routers.users import router as users_router
+from app.config.settings import settings as app_settings
+from database.database import Base, engine
 
 from utils.merchant_extractor import (
     extract_merchant_details,
@@ -30,6 +31,7 @@ from utils.merchant_extractor import (
     extract_orders
 )
 
+Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
 
@@ -49,7 +51,8 @@ class MerchantToken(BaseModel):
     merchant_id: str
     access_token: str
 
-app = FastAPI(title="Pizza API", version="1.0.0")
+app = FastAPI(title=app_settings.APP_NAME, version=app_settings.APP_VERSION)
+
 
 # Include routers (this connects all your route files)
 # app.include_router(pizzas.router, prefix="/api", tags=["pizzas"])
@@ -63,7 +66,7 @@ app.include_router(cart_router)
 app.include_router(clover_cart_router)
 app.include_router(user_preferences_router)
 app.include_router(users.router, prefix="/users")
-app.include_router(user_preferences_router)
+app.include_router(user_preferences_router, prefix="/users")
 
 @app.get("/")
 def read_root():
