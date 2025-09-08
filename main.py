@@ -1,12 +1,6 @@
 from fastapi import FastAPI, Query, HTTPException, Path, Header, Depends
 from dotenv import load_dotenv
 from openai import OpenAI
-from routers import users, pizzas, ai, auth
-from app.routes.clover_auth import router as clover_router
-from app.routes.userCart import router as userCart
-from app.routes.clover_data import router as clover_data_router, merchant_router as clover_merchant_router
-from app.routes.cart import router as cart_router
-from app.routes.clover_cart import router as clover_cart_router
 import os
 from urllib.parse import urlencode
 import secrets
@@ -18,10 +12,14 @@ from sqlalchemy.orm import Session
 from database.database import get_db
 from helpers.merchant_helper import MerchantHelper
 from models.merchant_token import MerchantToken
-from app.routes.user_preferences import router as user_preferences_router
+from routers import ai, auth, pizzas
 from routers.users import router as users_router
-from app.config.settings import settings as app_settings
-from database.database import Base, engine
+from app.routes.clover_auth import router as clover_router
+from app.routes.userCart import router as userCart
+from app.routes.clover_data import router as clover_data_router, merchant_router as clover_merchant_router
+from app.routes.cart import router as cart_router
+from app.routes.clover_cart import router as clover_cart_router
+from app.routes.user_preferences import router as user_preferences_router
 
 from utils.merchant_extractor import (
     extract_merchant_details,
@@ -30,18 +28,21 @@ from utils.merchant_extractor import (
     extract_inventory_items,
     extract_orders
 )
+from app.config.settings import Settings # Re-add this import
 
+from database.database import Base, engine # Re-add this import
+
+# Create all tables if they don't exist
 Base.metadata.create_all(bind=engine)
 
-app = FastAPI()
+app = FastAPI(title=Settings().APP_NAME, version=Settings().APP_VERSION)
 
 # Load environment variables
 load_dotenv()
 
-# client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))  # Make sure you have this in your .env file
 # Get Clover configuration from environment variables
-CLOVER_ACCESS_TOKEN = os.getenv("CLOVER_ACCESS_TOKEN")  # The token your colleague has
-CLOVER_MERCHANT_ID = os.getenv("CLOVER_MERCHANT_ID")    # The merchant ID your colleague has
+CLOVER_ACCESS_TOKEN = os.getenv("CLOVER_ACCESS_TOKEN")
+CLOVER_MERCHANT_ID = os.getenv("CLOVER_MERCHANT_ID")
 CLOVER_BASE_URL = os.getenv("CLOVER_BASE_URL", "https://apisandbox.dev.clover.com")
 
 # Store merchant tokens (in production, use database)
@@ -51,13 +52,7 @@ class MerchantToken(BaseModel):
     merchant_id: str
     access_token: str
 
-app = FastAPI(title=app_settings.APP_NAME, version=app_settings.APP_VERSION)
-
-
 # Include routers (this connects all your route files)
-# app.include_router(pizzas.router, prefix="/api", tags=["pizzas"])
-# app.include_router(users.router, prefix="/api", tags=["users"])
-# app.include_router(ai.router, prefix="/auth", tags=["ai"])
 app.include_router(auth.router, prefix="/auth", tags=["auth"])
 app.include_router(clover_router)
 app.include_router(clover_data_router)
@@ -65,8 +60,8 @@ app.include_router(clover_merchant_router)
 app.include_router(cart_router)
 app.include_router(clover_cart_router)
 app.include_router(user_preferences_router)
-app.include_router(users.router, prefix="/users")
-app.include_router(user_preferences_router, prefix="/users")
+app.include_router(users_router) # This is a placeholder for your users router. Make sure the endpoints inside it don't conflict with any other routers.
+app.include_router(userCart)
 
 @app.get("/")
 def read_root():
@@ -75,7 +70,6 @@ def read_root():
 @app.get("/merchant")
 async def get_merchant_details():
     """Get merchant details - Mobile app calls this"""
-
     if not CLOVER_ACCESS_TOKEN or not CLOVER_MERCHANT_ID:
         raise HTTPException(
             status_code=500,
@@ -88,22 +82,21 @@ async def get_merchant_details():
         "Authorization": f"Bearer {CLOVER_ACCESS_TOKEN}",
         "Content-Type": "application/json"
     }
-
     async with httpx.AsyncClient() as client:
         try:
             response = await client.get(url, headers=headers)
             response.raise_for_status()
-
             return {
                 "success": True,
                 "data": response.json()
             }
-
         except httpx.HTTPStatusError as e:
             raise HTTPException(
                 status_code=e.response.status_code,
                 detail=f"Clover API error: {e.response.text}"
             )
+
+# ... (Rest of your code is correct, no need to copy)
 
 @app.get("/merchant/properties")
 async def get_merchant_properties():
