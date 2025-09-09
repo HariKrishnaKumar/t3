@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr, constr
+from pydantic import BaseModel, EmailStr, constr, Field
 from typing import Optional, Dict, Any
 
 
@@ -32,19 +32,26 @@ class UserBase(BaseModel):
 class UserCreate(UserBase):
     password: str
 
-class UserUpdate(UserBase):
-    password: Optional[str] = None
-    # Add the preference field for updating user preferences
-    preference: Optional[Dict[str, Any]] = None
+class UserUpdate(BaseModel):
+    name: Optional[str] = None
+    alternate_contact: Optional[str] = None
+    floor_or_office: Optional[str] = None
+    address: Optional[str] = None
 
-class UserOut(UserBase):
+class UserOut(BaseModel):
     id: int
-    is_active: bool
+    mobile_number: str
+    name: Optional[str] = None
+    alternate_contact: Optional[str] = None
+    floor_or_office: Optional[str] = None
+    address: Optional[str] = None
     preference: Optional[Dict[str, Any]] = None
 
     class Config:
-        from_attributes= True
+        from_attributes = True
 
 class PreferenceUpdateRequest(BaseModel):
     mobile_number: str
-    preference: Dict[str, Any]
+    preference: str = Field(..., description="The selected preference (e.g., 'pickup', 'delivery')")
+
+    # from_attributes
