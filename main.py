@@ -20,6 +20,7 @@ from app.routes.clover_data import router as clover_data_router, merchant_router
 from app.routes.cart import router as cart_router
 from app.routes.clover_cart import router as clover_cart_router
 from app.routes.user_preferences import router as user_preferences_router
+from app.routes import recommendations
 
 from utils.merchant_extractor import (
     extract_merchant_details,
@@ -62,6 +63,7 @@ app.include_router(clover_cart_router)
 app.include_router(user_preferences_router)
 app.include_router(users_router) # This is a placeholder for your users router. Make sure the endpoints inside it don't conflict with any other routers.
 app.include_router(userCart)
+app.include_router(recommendations.router)
 
 @app.get("/")
 def read_root():
