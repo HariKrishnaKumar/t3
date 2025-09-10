@@ -10,11 +10,11 @@ router = APIRouter(
 )
 
 @router.put("/preference")
-def update_user_preference_by_mobile(
+def update_user_preference_by_id(
     request: PreferenceUpdateRequest,
     db: Session = Depends(get_db)
 ):
-    db_user = db.query(DBUser).filter(DBUser.mobile_number == request.mobile_number).first()
+    db_user = db.query(DBUser).filter(DBUser.id == request.id).first()
     if not db_user:
         raise HTTPException(
             status_code=404,
@@ -22,24 +22,16 @@ def update_user_preference_by_mobile(
         )
 
     # Define all possible preferences
-    all_preferences = {
-        "pickup": False,
-        "delivery": False,
-        "reservation": False,
-        "catering": False,
-        "events": False,
-    }
+    all_preferences = ["pickup", "delivery", "reservation", "catering", "events"]
 
     # Set the selected preference to True
-    if request.preference in all_preferences:
-        all_preferences[request.preference] = True
-    else:
+    if request.preference not in all_preferences:
         raise HTTPException(
             status_code=400,
             detail="Invalid preference option"
         )
 
-    db_user.preference = all_preferences
+    db_user.preference = request.preference
     db.commit()
     db.refresh(db_user)
     return db_user

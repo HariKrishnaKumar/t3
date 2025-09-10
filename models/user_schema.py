@@ -45,13 +45,13 @@ class UserOut(BaseModel):
     alternate_contact: Optional[str] = None
     floor_or_office: Optional[str] = None
     address: Optional[str] = None
-    preference: Optional[Dict[str, Any]] = None
+    preference: Optional[str] = None
 
     class Config:
         from_attributes = True
 
 class PreferenceUpdateRequest(BaseModel):
-    mobile_number: str
+    id: int
     preference: str = Field(..., description="The selected preference (e.g., 'pickup', 'delivery')")
 
     # from_attributes
